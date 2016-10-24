@@ -1,98 +1,97 @@
 
-
-
 import java.io.IOException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.ServletContext;
 
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.sql.DriverManager;
+
 import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * Servlet implementation class BDServlet
  */
 public class BDServlet extends HttpServlet {
 
-	 
-////////////////////////////////////////////////////////////////////////////////////////
-public void init() {
+	private static final long serialVersionUID = 1L;
 
-// Lee del contexto de servlet (Sesiï¿½n a nivel de aplicaciï¿½n)
-ServletContext context = getServletContext();
-}
+	private static final String DRIVER = "com.mysql.jdbc.Driver";
 
+	private static final String DATABASE = "usersdb";
+	private static final String SERVERNAME = "localhost";
+	private static final String PORT = "3306";
+	private static final String USERNAME = "root"; // complete
+	private static final String PASSWORD = "admin"; // complete
 
-////////////////////////////////////////////////////////////////////////////////////////
-public void doGet(HttpServletRequest req, HttpServletResponse res) 
-throws IOException, ServletException {
+	private static final String URL = "jdbc:mysql://" + SERVERNAME + ":" + PORT + "/" + DATABASE;
 
-String database = "";       
-String servername = "localhost";
-String port = "3306";
-String username  = ""; // complete
-String password  = ""; // complete
+	////////////////////////////////////////////////////////////////////////////////////////
+	public void init() {
 
-// Establece el Content Type
-res.setContentType("text/html");
-PrintWriter out = res.getWriter();
-
-out.println("<HTML>");
-out.println("<HEAD><TITLE>BDServlet</TITLE></HEAD>");
-out.println("<BODY bgcolor=\"#ffff66\">");
-out.println("<H1><FONT color=\"#666600\">Database: Users</FONT></H1></BR>");
-out.println("<FORM METHOD=\"POST\" ACTION=\"" + "\">"); // Se llama asï¿½ mismo por POST        
-
-
-try {
-
-	// 1- Load driver
-
-	// 2- Obtain a Connection object --> con
-	String url = "";
-			// complete
-	Connection con = null;
-		
-	if (con==null){
-		System.out.println("--->UNABLE TO CONNECT TO SERVER:" + servername);
-	} else {
-
-	// 3- Obtain an Statement object -> st
-		Statement st = con.createStatement();
-
-	// Retrieve users from the ResultSet --> rs
-		ResultSet rs = st.executeQuery("select * from users");
-		
-	 out.println("<FONT color=\"#ff0000\">Users:</FONT><BR>");
-	 while (rs.next()){
-		out.println("<FONT color=\"#ff0000\">"+rs.getString("idusers")+" - "+rs.getString("name")+"  "+rs.getString("surename")+"</FONT><BR>");
-	 }
-	
+		// Lee del contexto de servlet (Sesión a nivel de aplicación)
+		//ServletContext context = getServletContext();
 	}
-} catch (Exception e) {
-	out.println("<FONT color=\"#ff0000\">"+e.getMessage()+"</FONT><BR>");
-}
 
+	////////////////////////////////////////////////////////////////////////////////////////
+	public void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException {
 
+		// Set the Content Type
+		res.setContentType("text/html");
+		
+		try(PrintWriter out = res.getWriter()){
 
+		out.println("<!DOCTYPE html>");
+		out.println("<html>");
+		out.println("<head><title>BDServlet</title></head>");
+		out.println("<body style=\"background-color:#ffff66\">");
+		out.println("<h1 style=\"color=:#666600\">Database: User</h1></br>");
+		out.println("<form method=\"post\" action=\"" + "\">"); // called by POST itself
+																
+																
 
-out.println("</FORM>");
-out.println("</BODY></HTML>");
+		try {
 
-out.close();
-}
+			// 1- Load driver
+			Class.forName(DRIVER).newInstance();
+			// 2- Obtain a Connection object --> con
+			// complete
+			Connection con = java.sql.DriverManager.getConnection(URL, USERNAME, PASSWORD);
+			;
 
-////////////////////////////////////////////////////////////////////////////////////////  	
-public void doPost(HttpServletRequest req, HttpServletResponse res) 
-throws IOException, ServletException {    
-}
+			if (con == null) {
+				System.out.println("--->UNABLE TO CONNECT TO SERVER:" + SERVERNAME);
+			} else {
+
+				// 3- Obtain an Statement object -> st
+				try (Statement st = con.createStatement()) {
+
+					// Retrieve users from the ResultSet --> rs
+					ResultSet rs = st.executeQuery("select * from users");
+
+					out.println("<p style=\"color:#ff0000\">Users:</p>");
+					while (rs.next()) {
+						out.println("<p style=\"color:#ff0000\">" + rs.getString("idusers") + " - " + rs.getString("name")
+								+ "  " + rs.getString("surename") + "</p>");
+					}
+				} 
+				
+			}
+		} catch (ClassNotFoundException | SQLException | InstantiationException | IllegalAccessException e) {
+			out.println("<p style=\"color:#ff0000\">" + e.getMessage() + "</p>");
+		}
+
+		out.println("</form>");
+		out.println("</body></html>");
+
+		}
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	public void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException {
+	}
 }
