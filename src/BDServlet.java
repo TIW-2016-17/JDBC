@@ -1,10 +1,15 @@
 
 import java.io.IOException;
 
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import com.sun.appserv.jdbc.DataSource;
 
 import java.io.PrintWriter;
 
@@ -22,13 +27,13 @@ public class BDServlet extends HttpServlet {
 
 	private static final String DRIVER = "com.mysql.jdbc.Driver";
 
-	private static final String DATABASE = "usersdb";
+	//private static final String DATABASE = "usersdb";
 	private static final String SERVERNAME = "localhost";
-	private static final String PORT = "3306";
-	private static final String USERNAME = "root"; // complete
-	private static final String PASSWORD = "admin"; // complete
+	//private static final String PORT = "3306";
+	//private static final String USERNAME = "root"; // complete
+	//private static final String PASSWORD = "admin"; // complete
 
-	private static final String URL = "jdbc:mysql://" + SERVERNAME + ":" + PORT + "/" + DATABASE;
+	//private static final String URL = "jdbc:mysql://" + SERVERNAME + ":" + PORT + "/" + DATABASE;
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	public void init() {
@@ -42,51 +47,60 @@ public class BDServlet extends HttpServlet {
 
 		// Set the Content Type
 		res.setContentType("text/html");
-		
-		try(PrintWriter out = res.getWriter()){
 
-		out.println("<!DOCTYPE html>");
-		out.println("<html>");
-		out.println("<head><title>BDServlet</title></head>");
-		out.println("<body style=\"background-color:#ffff66\">");
-		out.println("<h1 style=\"color=:#666600\">Database: User</h1></br>");
-		out.println("<form method=\"post\" action=\"" + "\">"); // called by POST itself
-																
-																
+		try (PrintWriter out = res.getWriter()) {
 
-		try {
+			out.println("<!DOCTYPE html>");
+			out.println("<html>");
+			out.println("<head><title>BDServlet</title></head>");
+			out.println("<body style=\"background-color:#ffff66\">");
+			out.println("<h1 style=\"color=:#666600\">Database: User</h1></br>");
+			out.println("<form method=\"post\" action=\"" + "\">"); // called by
+																	// POST
+																	// itself
 
-			// 1- Load driver
-			Class.forName(DRIVER).newInstance();
-			// 2- Obtain a Connection object --> con
-			// complete
-			Connection con = java.sql.DriverManager.getConnection(URL, USERNAME, PASSWORD);
-			;
+			try {
 
-			if (con == null) {
-				System.out.println("--->UNABLE TO CONNECT TO SERVER:" + SERVERNAME);
-			} else {
-
-				// 3- Obtain an Statement object -> st
-				try (Statement st = con.createStatement()) {
-
-					// Retrieve users from the ResultSet --> rs
-					ResultSet rs = st.executeQuery("select * from users");
-
-					out.println("<p style=\"color:#ff0000\">Users:</p>");
-					while (rs.next()) {
-						out.println("<p style=\"color:#ff0000\">" + rs.getString("idusers") + " - " + rs.getString("name")
-								+ "  " + rs.getString("surename") + "</p>");
-					}
-				} 
+				// 1- Load driver
+				Class.forName(DRIVER).newInstance();
+				// 2- Obtain a Connection object --> con
+				// complete
+				// Connection con = java.sql.DriverManager.getConnection(URL,
+				// USERNAME, PASSWORD);
 				
-			}
-		} catch (ClassNotFoundException | SQLException | InstantiationException | IllegalAccessException e) {
-			out.println("<p style=\"color:#ff0000\">" + e.getMessage() + "</p>");
-		}
+				// You need to create a datasource in the application server
 
-		out.println("</form>");
-		out.println("</body></html>");
+				Context ctx = new InitialContext();
+				DataSource ds = (DataSource) ctx.lookup("jdbc/mysqlusersdb");
+
+				try (Connection con = ds.getConnection()) {
+
+					if (con == null) {
+						System.out.println("--->UNABLE TO CONNECT TO SERVER:" + SERVERNAME);
+					} else {
+
+						// 3- Obtain an Statement object -> st
+						try (Statement st = con.createStatement()) {
+
+							// Retrieve users from the ResultSet --> rs
+							ResultSet rs = st.executeQuery("select * from users");
+
+							out.println("<p style=\"color:#ff0000\">Users:</p>");
+							while (rs.next()) {
+								out.println("<p style=\"color:#ff0000\">" + rs.getString("idusers") + " - "
+										+ rs.getString("name") + "  " + rs.getString("surename") + "</p>");
+							}
+						}
+					}
+
+				}
+			} catch (ClassNotFoundException | SQLException | InstantiationException | IllegalAccessException
+					| NamingException e) {
+				out.println("<p style=\"color:#ff0000\">" + e.getMessage() + "</p>");
+			}
+
+			out.println("</form>");
+			out.println("</body></html>");
 
 		}
 	}
